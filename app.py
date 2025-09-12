@@ -104,9 +104,14 @@ with tab2:
 # --- Subsidy Info ---
 with tab3:
     st.header("🏛 Government Subsidy Info")
-    choice = st.selectbox("Select Scheme", list(subsidies.keys()), key="subsidy_scheme")
+    scheme = st.selectbox("Select Scheme", list(subsidies.keys()), key="subsidy_scheme")
     if st.button("Get Info", key="get_subsidy_btn"):
-        st.info(f"{choice}:** {subsidies[choice]}")
+        # Display the image first
+        image_query = subsidies[scheme]['image']
+        st.image(f"https://source.unsplash.com/random/800x400/?{image_query}") 
+        
+        st.info(f"**Description:** {subsidies[scheme]['description']}")
+        st.markdown(f"**Official Link:** [Learn more]({subsidies[scheme]['link']})")
 
 # --- Reminders ---
 with tab4:
@@ -208,4 +213,5 @@ with tab9:
                 st.success(f"**Advice for {city_water_advice.title()}:**")
                 st.info(advice)
             
+
 
