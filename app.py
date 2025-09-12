@@ -1,16 +1,19 @@
 import streamlit as st
-import random
 import requests
-import json
 import os
+import random
+import json
 from datetime import datetime, timedelta
 
-WEATHER_API_KEY = "17d7e2b75f830375584c3551f882a13f"  # replace with your real key
+# ================== WEATHER CONFIG ==================
+# Hardcode API key directly for hackathon simplicity
+# ⚠️ Replace 'YOUR_API_KEY_HERE' with your actual OpenWeatherMap API key
+WEATHER_API_KEY = "YOUR_API_KEY_HERE"
 
 def get_weather(city):
     """Fetch weather info for a city using OpenWeatherMap API"""
-    if not WEATHER_API_KEY:
-        return {"error": "API key missing"}
+    if not WEATHER_API_KEY or WEATHER_API_KEY == "YOUR_API_KEY_HERE":
+        return {"error": "API key is missing or not configured."}
     
     url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid={WEATHER_API_KEY}"
     res = requests.get(url).json()
@@ -23,18 +26,29 @@ def get_weather(city):
         "temp": res["main"]["temp"],
         "humidity": res["main"]["humidity"],
         "desc": res["weather"][0]["description"].title()
-    }    
-# Load data files
-with open("data/market.json") as f:
-    market_prices = json.load(f)
+    }
 
-with open("data/subsidies.json") as f:
-    subsidies = json.load(f)
+# ================== SAMPLE DATA ==================
+market_prices = {
+    "Rice": "₹40/kg",
+    "Wheat": "₹28/kg",
+    "Tomato": "₹20/kg",
+    "Cotton": "₹6500/quintal"
+}
 
-with open("data/helplines.json") as f:
-    helplines = json.load(f)
+subsidies = {
+    "PM-KISAN": "₹6,000 per year in 3 equal installments.",
+    "Fasal Bima Yojana": "Insurance cover against crop failure.",
+    "Soil Health Card": "Subsidy on soil testing & nutrients."
+}
 
-# Dummy disease list
+helplines = {
+    "Rice": "1800-180-1551",
+    "Wheat": "1800-180-1552",
+    "Cotton": "1800-180-1553",
+    "Tomato": "1800-180-1554"
+}
+
 diseases = [
     {"name": "Leaf Spot Fungus", "advice": "Use copper-based fungicide and avoid excess watering."},
     {"name": "Aphid Pest Attack", "advice": "Spray neem oil solution, encourage ladybugs."},
@@ -42,16 +56,17 @@ diseases = [
     {"name": "Healthy Crop", "advice": "No issues detected. Keep monitoring regularly."}
 ]
 
-# Session state for reminders & forum
+# ================== SESSION STATE ==================
+# Session state for reminders and forum messages
 if "reminders" not in st.session_state:
     st.session_state.reminders = []
-if "forum" not in st.session_state:
-    st.session_state.forum = []
+if "forum_messages" not in st.session_state:
+    st.session_state.forum_messages = []
 
-# Streamlit UI
-st.set_page_config(page_title="🌱 AI Farmer Assistant", layout="wide")
+# ================== STREAMLIT APP ==================
+st.set_page_config(page_title="AI Farmer Assistant", page_icon="🌱", layout="wide")
 st.title("🌱 AI Farmer Assistant")
-st.write("Expert Help for Farmers — Crop Health • Market Prices • Subsidy Info • Reminders • Forum • Experts 🌦 Weather Information")
+st.markdown("Expert Help on Demand for Farmers")
 
 # Tabs
 tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
@@ -61,16 +76,17 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "⏰ Reminders",
     "💬 Farmer Forum",
     "📞 Call an Expert",
-     "🌦 Weather Info"
+    "🌦 Weather Info"
 ])
 
-# --- Crop Diagnosis ---
+# --- Diagnose Crop ---
 with tab1:
-    st.header("🧪 Diagnose Crop Disease")
-    uploaded = st.file_uploader("Upload a crop image", type=["jpg", "png", "jpeg"])
+    st.header("🧪 Diagnose Crop")
+    uploaded = st.file_uploader("Upload crop image", type=["jpg", "png"])
     if uploaded:
         st.image(uploaded, caption="Uploaded Crop Image", use_column_width=True)
-        prediction = random.choice(diseases)  # Dummy prediction
+        # Dummy prediction
+        prediction = random.choice(diseases)
         st.success(f"**Prediction:** {prediction['name']}")
         st.info(f"**Advice:** {prediction['advice']}")
 
@@ -84,37 +100,37 @@ with tab2:
 # --- Subsidy Info ---
 with tab3:
     st.header("🏛 Government Subsidy Info")
-    choice = st.selectbox("Select Scheme", list(subsidies.keys()), key="subsidy_scheme")
+    scheme = st.selectbox("Select Scheme", list(subsidies.keys()), key="subsidy_scheme")
     if st.button("Get Info", key="get_subsidy_btn"):
-        st.info(f"**{choice}:** {subsidies[choice]}")
+        st.info(f"**{scheme}:** {subsidies[scheme]}")
 
 # --- Reminders ---
 with tab4:
-    st.header("⏰ Set Farming Reminders")
-    task = st.selectbox("Choose Task", ["Fertilization", "Spraying", "Harvesting"])
-    days = st.slider("Remind me in (days)", 1, 30, 7)
-    if st.button("Set Reminder"):
+    st.header("⏰ Set Reminders")
+    task = st.text_input("Enter task (e.g., Fertilization, Spraying)", key="reminder_task")
+    days = st.slider("Remind me in (days)", 1, 30, 7, key="reminder_days")
+    if st.button("Set Reminder", key="set_reminder_btn"):
         remind_date = datetime.now() + timedelta(days=days)
         st.session_state.reminders.append((task, remind_date))
         st.success(f"✅ Reminder set for **{task}** on {remind_date.strftime('%d-%m-%Y')}")
-
+    
     if st.session_state.reminders:
         st.subheader("📌 Your Reminders")
         for task, date in st.session_state.reminders:
-            st.write(f"- {task} → {date.strftime('%d-%m-%Y')}")
+            st.write(f"- **{task}** on {date.strftime('%d-%m-%Y')}")
 
 # --- Farmer Forum ---
 with tab5:
     st.header("💬 Farmer Forum")
-    user_msg = st.text_input("Ask a question or share a tip")
-    if st.button("Post"):
-        if user_msg.strip():
-            st.session_state.forum.append(user_msg)
+    new_msg = st.text_input("Ask a question or share tips", key="forum_input")
+    if st.button("Post", key="forum_post_btn"):
+        if new_msg:
+            st.session_state.forum_messages.append(new_msg)
             st.success("✅ Posted successfully!")
-
-    if st.session_state.forum:
-        st.write("### 🌾 Forum Messages")
-        for i, msg in enumerate(st.session_state.forum[::-1], 1):
+    
+    if st.session_state.forum_messages:
+        st.subheader("Community Messages")
+        for i, msg in enumerate(reversed(st.session_state.forum_messages), 1):
             st.write(f"{i}. {msg}")
 
 # --- Call an Expert ---
@@ -124,7 +140,8 @@ with tab6:
     if st.button("Get Helpline", key="get_helpline_btn"):
         st.success(f"📞 Official Helpline for {crop_expert}: {helplines[crop_expert]}")
         st.markdown(f"[📲 Call Now](tel:{helplines[crop_expert]})")
-        
+
+# --- Weather Info ---
 with tab7:
     st.header("🌦 Weather Information")
     city = st.text_input("Enter your city / village", key="weather_city")
@@ -137,12 +154,3 @@ with tab7:
             st.write(f"🌡 Temperature: {data['temp']} °C")
             st.write(f"💧 Humidity: {data['humidity']}%")
             st.write(f"☁ Condition: {data['desc']}")
-
-
-
-
-
-
-
-
-
