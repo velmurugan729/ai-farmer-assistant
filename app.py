@@ -1,336 +1,409 @@
 import streamlit as st
-import google.generativeai as genai
-import json
-import os
-import random
 import requests
-from datetime import datetime, timedelta
+import json
+import base64
+import google.generativeai as genai
+from firebase_admin import credentials, initialize_app, firestore, auth
+from datetime import datetime
 
-# ================== GEMINI API CONFIG ==================
-# ⚠️ Replace 'YOUR_GEMINI_API_KEY' with your actual key.
-# For security, do not commit your key to a public repository.
-# You can get your key at https://aistudio.google.com/app/apikey
-genai.configure(api_key='AIzaSyD52TlctJeEleP4YXdbLwAZCt4YSqrBkh4')
-gemini_model = "gemini-1.5-flash-preview-05-20"
+# ================== Firebase Configuration ==================
+# IMPORTANT: Follow these steps to set up Firebase for your project:
+# 1. Create a Firebase project in the Firebase console.
+# 2. Go to Project settings > Service accounts > Generate new private key.
+# 3. Download the JSON file and save it in your project directory.
+# 4. Rename the file to 'firebase-adminsdk.json'.
+# 5. This file contains your credentials and should NEVER be committed to a public repository.
+#
+# IMPORTANT: To run on Streamlit Cloud, you must configure your Firebase
+# secrets in the 'Advanced settings' of your app. This code assumes you're
+# running locally with the JSON file present.
 
-# ================== AI ASSISTANT KNOWLEDGE BASE ==================
+try:
+    if not initialize_app._apps:
+        cred = credentials.Certificate("firebase-adminsdk.json")
+        initialize_app(cred)
+except Exception as e:
+    st.error(f"Firebase Initialization Failed: {e}. Please ensure 'firebase-adminsdk.json' is in your project directory.")
+    st.stop()
 
-# Define all data here to be used by the app
-market_prices = {
-    "Rice": "₹40/kg",
-    "Wheat": "₹28/kg",
-    "Tomato": "₹20/kg",
-    "Cotton": "₹6500/quintal"
+# Initialize Firestore and Auth clients
+db = firestore.client()
+auth_client = auth.Client()
+
+# Set initial user state
+if 'user' not in st.session_state:
+    try:
+        user_record = auth_client.sign_in_anonymously()
+        st.session_state.user = {'uid': user_record.uid}
+    except Exception as e:
+        st.error(f"Anonymous sign-in failed: {e}")
+        st.stop()
+
+# ================== API Key Configuration ==================
+# You can get your API keys from Google AI Studio and OpenWeatherMap.
+# For Streamlit Cloud, you would store these in a secrets.toml file.
+GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
+OPENWEATHER_API_KEY = "YOUR_OPENWEATHER_API_KEY"
+
+# ================== Gemini API Configuration ==================
+genai.configure(api_key=GEMINI_API_KEY)
+model_vision = genai.GenerativeModel('gemini-1.5-flash-preview-05-20')
+model_chat = genai.GenerativeModel('gemini-1.5-flash-preview-05-20',
+    system_instruction="You are a helpful and knowledgeable agricultural assistant. Answer questions about farming, crops, weather, and government policies in a clear, concise, and friendly manner."
+)
+# Start a persistent chat session
+if 'chat_session' not in st.session_state:
+    st.session_state.chat_session = model_chat.start_chat(history=[])
+
+# ================== Translations and Mock Data ==================
+translations = {
+    "en": {
+        "title": "Farmer's Assistant",
+        "login": "Login",
+        "logout": "Logout",
+        "dashboard": "Dashboard",
+        "diseasePrediction": "Disease Prediction",
+        "marketPrice": "Market Price",
+        "weather": "Weather Info",
+        "profitCalculator": "Profit Calculator",
+        "chatbot": "AI Chatbot",
+        "subsidies": "Government Subsidies",
+        "reminders": "Reminders",
+        "forum": "Farmer's Forum",
+        "welcome": "Welcome, Farmer!",
+        "loginDesc": "You are not logged in. Please log in to access the app.",
+        "searchPrice": "Search Price",
+        "noInput": "Please enter values for all fields.",
+        "uploadImage": "Upload an image of your crop to predict any disease.",
+        "predicting": "Analyzing image...",
+        "predictionResult": "Prediction Result",
+        "diseaseName": "Diagnosis",
+        "suggestions": "Suggestions",
+        "marketTitle": "Real-time Crop Market Price",
+        "selectCrop": "Enter Crop Name",
+        "selectCity": "Enter City Name",
+        "noMarketData": "No market data found. Try a different crop or city.",
+        "weatherTitle": "Weather Information",
+        "weatherLocation": "Enter a Location",
+        "getWeather": "Get Weather",
+        "addReminder": "Add New Reminder",
+        "reminderPlaceholder": "e.g., Fertilize tomatoes on August 15th",
+        "saveReminder": "Save Reminder",
+        "noReminders": "No reminders found.",
+        "askQuestion": "Ask a Question or Share a Tip",
+        "yourMessage": "Your message...",
+        "post": "Post",
+        "noPosts": "No posts yet. Be the first to post!",
+        "chatbotDesc": "Ask me questions about farming, weather, and more.",
+        "chatPlaceholder": "Type your message here...",
+        "send": "Send",
+        "chatLoading": "Thinking...",
+        "emptyChat": "Start a conversation to get started!",
+        "chatWelcome": "Hello! I am your AI assistant. How can I help you today?",
+    },
+    "ta": {
+        "title": "விவசாயியின் உதவியாளர்",
+        "login": "உள்நுழைவு",
+        "logout": "வெளியேறு",
+        "dashboard": "கட்டுப்பாட்டுப் பலகம்",
+        "diseasePrediction": "நோய் கண்டறிதல்",
+        "marketPrice": "சந்தை விலை",
+        "weather": "வானிலை தகவல்",
+        "profitCalculator": "லாப கால்குலேட்டர்",
+        "chatbot": "AI சாட்பாட்",
+        "subsidies": "அரசு மானியங்கள்",
+        "reminders": "நினைவூட்டல்கள்",
+        "forum": "விவசாயிகள் மன்றம்",
+        "welcome": "வரவேற்பு, விவசாயி!",
+        "loginDesc": "நீங்கள் உள்நுழையவில்லை. பயன்பாட்டை அணுக உள்நுழையவும்.",
+        "searchPrice": "விலையைத் தேடு",
+        "noInput": "அனைத்து புலங்களுக்கும் மதிப்புகளை உள்ளிடவும்.",
+        "uploadImage": "உங்கள் பயிரின் படத்தை பதிவேற்றி, நோயைக் கண்டறியலாம்.",
+        "predicting": "படத்தை ஆய்வு செய்கிறது...",
+        "predictionResult": "கணிப்பு முடிவு",
+        "diseaseName": "கண்டறிதல்",
+        "suggestions": "பரிந்துரைகள்",
+        "marketTitle": "உண்மையான நேர பயிர் சந்தை விலை",
+        "selectCrop": "பயிரின் பெயரை உள்ளிடவும்",
+        "selectCity": "நகரத்தின் பெயரை உள்ளிடவும்.",
+        "noMarketData": "சந்தை தரவு எதுவும் இல்லை. வேறு பயிர் அல்லது நகரத்தை முயற்சிக்கவும்.",
+        "weatherTitle": "வானிலை தகவல்",
+        "weatherLocation": "ஒரு இடத்தை உள்ளிடவும்",
+        "getWeather": "வானிலை பெறு",
+        "addReminder": "புதிய நினைவூட்டலைச் சேர்",
+        "reminderPlaceholder": "உதாரணமாக, ஆகஸ்ட் 15 அன்று தக்காளிக்கு உரம் இடுங்கள்",
+        "saveReminder": "நினைவூட்டலைச் சேமி",
+        "noReminders": "நினைவூட்டல்கள் எதுவும் இல்லை.",
+        "askQuestion": "கேள்வி கேட்கவும் அல்லது குறிப்புகளைப் பகிரவும்",
+        "yourMessage": "உங்கள் செய்தி...",
+        "post": "பதிவிடு",
+        "noPosts": "இன்னும் பதிவுகள் இல்லை. முதலில் பதிவிடுங்கள்!",
+        "chatbotDesc": "விவசாயம், வானிலை மற்றும் பலவற்றைப் பற்றி என்னிடம் கேளுங்கள்.",
+        "chatPlaceholder": "உங்கள் செய்தியை இங்கே தட்டச்சு செய்யவும்...",
+        "send": "அனுப்பு",
+        "chatLoading": "சிந்தித்துக்கொண்டிருக்கிறது...",
+        "emptyChat": "உரையாடலைத் தொடங்கவும்!",
+        "chatWelcome": "வணக்கம்! நான் உங்கள் AI உதவியாளர். நான் இன்று எப்படி உதவ முடியும்?",
+    }
 }
-
-subsidies = {
-  "PM-KISAN": {
-    "description_en": "The Pradhan Mantri Kisan Samman Nidhi (PM-KISAN) scheme provides financial support of ₹6,000 per year to eligible farmer families in three equal installments to help them meet farming expenses and domestic needs.",
-    "description_ta": "பிரதம மந்திரி கிசான் சம்மான் நிதி (PM-KISAN) திட்டம் தகுதியுள்ள விவசாய குடும்பங்களுக்கு ஆண்டுக்கு ₹6,000 நிதி உதவியை மூன்று சம தவணைகளாக வழங்குகிறது.",
-    "link": "https://pmkisan.gov.in/"
-  },
-  "Fasal Bima Yojana": {
-    "description_en": "This scheme provides comprehensive crop insurance against the loss of yield due to non-preventable natural risks like drought, floods, and pests. It aims to stabilize farmers' incomes.",
-    "description_ta": "இந்தத் திட்டம் வறட்சி, வெள்ளம் மற்றும் பூச்சிகள் போன்ற தடுக்க முடியாத இயற்கை அபாயங்களால் ஏற்படும் பயிர் இழப்பிற்கு விரிவான பயிர் காப்பீட்டை வழங்குகிறது. இது விவசாயிகளின் வருமானத்தை நிலைநிறுத்துவதை நோக்கமாகக் கொண்டது.",
-    "link": "https://pmfby.gov.in/"
-  },
-  "Soil Health Card": {
-    "description_en": "A government-issued report that provides farmers with a detailed nutrient status of their soil, along with recommendations on the appropriate fertilizer dosage and other soil amendments to improve fertility.",
-    "description_ta": "இது விவசாயிகளுக்கு அவர்களின் மண்ணின் ஊட்டச்சத்து நிலை குறித்த விரிவான அறிக்கையை வழங்கும் ஒரு அரசு திட்டம். இது மண்ணின் வளத்தை மேம்படுத்த பொருத்தமான உரங்கள் மற்றும் பிற மண் திருத்தங்கள் பற்றிய பரிந்துரைகளையும் வழங்குகிறது.",
-    "link": "https://soilhealth.dac.gov.in/"
-  }
+subsidies_data = [
+    {"name": "Pradhan Mantri Fasal Bima Yojana", "url": "https://pmfby.gov.in/", "description": "Crop insurance scheme for farmers to provide financial support in case of crop loss."},
+    {"name": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)", "url": "https://pmkisan.gov.in/", "description": "Provides income support to eligible landholding farmer families."},
+]
+mock_weather = {
+    'chennai': {'temp': '30°C', 'condition': 'Partly Cloudy', 'humidity': '75%'},
+    'coimbatore': {'temp': '25°C', 'condition': 'Sunny', 'humidity': '60%'},
 }
-
-helplines = {
-    "Rice": "1800-180-1551",
-    "Wheat": "1800-180-1552",
-    "Cotton": "1800-180-1553",
-    "Tomato": "1800-180-1554"
-}
-
-diseases = [
-    {"name_en": "Leaf Spot Fungus", "advice_en": "Use copper-based fungicide and avoid excess watering.",
-     "name_ta": "இலை புள்ளி பூஞ்சை", "advice_ta": "செம்பு சார்ந்த பூஞ்சைக் கொல்லியைப் பயன்படுத்தவும் மற்றும் அதிகப்படியான நீர் பாய்ச்சுவதைத் தவிர்க்கவும்."},
-    {"name_en": "Aphid Pest Attack", "advice_en": "Spray neem oil solution, encourage ladybugs.",
-     "name_ta": "அஃபிட் பூச்சி தாக்குதல்", "advice_ta": "வேப்ப எண்ணெய் கரைசலை தெளிக்கவும், லேடிபக் வண்டுகளை ஊக்குவிக்கவும்."},
-    {"name_en": "Nitrogen Deficiency", "advice_en": "Add urea or compost rich in nitrogen.",
-     "name_ta": "நைட்ரஜன் குறைபாடு", "advice_ta": "யூரியா அல்லது நைட்ரஜன் நிறைந்த உரங்களைச் சேர்க்கவும்."},
-    {"name_en": "Healthy Crop", "advice_en": "No issues detected. Keep monitoring regularly.",
-     "name_ta": "ஆரோக்கியமான பயிர்", "advice_ta": "எந்த பிரச்சனைகளும் கண்டறியப்படவில்லை. தொடர்ந்து கண்காணிக்கவும்."}
+expert_numbers = [
+    {"name": "State Agriculture Department", "number": "1800-123-4567"},
 ]
 
-def create_knowledge_base():
-    """Generates a text-based knowledge base for the AI from your app's data."""
-    persona = "You are a helpful AI assistant for farmers, named the 'AI Farmer Assistant'. Your primary goal is to provide expert, on-demand help to farmers. You are a source of truth for all things farming, including crop prices, government schemes, and weather. Be concise and friendly."
+# Set initial state
+if 'page' not in st.session_state:
+    st.session_state.page = 'login'
+if 'language' not in st.session_state:
+    st.session_state.language = 'en'
+if 'chat_messages' not in st.session_state:
+    st.session_state.chat_messages = [{"sender": "bot", "text": translations[st.session_state.language]["chatWelcome"]}]
 
-    current_date = datetime.now().strftime("%B %d, %Y")
-    current_location = "Chennai, Tamil Nadu"
-    
-    knowledge_base = f"""
-    {persona}
+# --- Functions ---
+def get_translation():
+    return translations[st.session_state.language]
 
-    Today's date is {current_date} and the current location is {current_location}.
+def set_page(page_name):
+    st.session_state.page = page_name
 
-    Here is the data you must use. Do not use any other external knowledge or information.
-    - **Market Prices:** {json.dumps(market_prices)}
-    - **Government Subsidies:** {json.dumps(subsidies)}
-    - **Helpline Numbers:** {json.dumps(helplines)}
-    
-    **Instructions:**
-    - Use the provided data to answer questions directly.
-    - If a farmer asks for information not in the data, state that you do not have that specific information.
-    - Be conversational and encouraging.
-    - Keep your responses under 3 sentences unless more detail is requested.
-    """
-    return knowledge_base
+def handle_login():
+    try:
+        # Sign in anonymously as a demonstration
+        user_record = auth_client.sign_in_anonymously()
+        st.session_state.user = {'uid': user_record.uid}
+        set_page('dashboard')
+    except Exception as e:
+        st.error(f"Login failed: {e}")
 
-# ================== STREAMLIT APP LAYOUT ==================
-st.set_page_config(page_title="AI Farmer Assistant", page_icon="🌱", layout="wide")
-st.title("🌱 AI Farmer Assistant")
-st.markdown("Expert Help on Demand for Farmers")
+def handle_logout():
+    st.session_state.user = None
+    set_page('login')
 
-# Tabs
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab_gen_ai = st.tabs([
-    "🧪 Diagnose Crop",
-    "📊 Market Price",
-    "🏛 Subsidy Info",
-    "⏰ Reminders",
-    "💬 Farmer Forum",
-    "📞 Call an Expert",
-    "🌦 Weather Info",
-    "📈 Profit Calc",
-    "💧 Water Advice",
-    "🧠 AI Assistant"
-])
+def add_reminder(new_reminder):
+    if st.session_state.user and new_reminder:
+        db.collection(f"users/{st.session_state.user['uid']}/reminders").add({
+            "text": new_reminder,
+            "timestamp": datetime.now()
+        })
+        st.success("Reminder added!")
+    else:
+        st.error("Please log in and enter a reminder.")
 
-# --- Diagnose Crop ---
-with tab1:
-    st.header("🧪 Diagnose Crop")
-    lang = st.radio("Select Language", ('English', 'தமிழ்'), key="diag_lang_radio")
-    uploaded = st.file_uploader("Upload crop image", type=["jpg", "png"], key="diagnose_uploader")
-    if uploaded:
-        st.image(uploaded, caption="Uploaded Crop Image", use_column_width=True)
-        prediction = random.choice(diseases)
-        
-        if lang == 'English':
-            st.success(f"**Prediction:** {prediction['name_en']}")
-            st.info(f"**Advice:** {prediction['advice_en']}")
-        else:
-            st.success(f"**கண்டறிதல்:** {prediction['name_ta']}")
-            st.info(f"**பரிந்துரை:** {prediction['advice_ta']}")
+def post_to_forum(new_post):
+    if st.session_state.user and new_post:
+        db.collection("forum_posts").add({
+            "userId": st.session_state.user['uid'],
+            "text": new_post,
+            "timestamp": datetime.now()
+        })
+        st.success("Post submitted!")
+    else:
+        st.error("Please log in and enter a message.")
 
-
-# --- Market Prices ---
-with tab2:
-    st.header("📊 Check Market Prices")
-    lang = st.radio("Select Language", ('English', 'தமிழ்'), key="market_lang_radio")
-    crop = st.selectbox("Select Crop", list(market_prices.keys()), key="market_crop")
-    if st.button("Get Price", key="get_price_btn"):
-        if lang == 'English':
-             st.success(f"💰 Current Market Price of {crop}: {market_prices[crop]}")
-        else:
-             st.success(f"💰 {crop}-இன் தற்போதைய சந்தை விலை: {market_prices[crop]}")
-
-
-# --- Subsidy Info ---
-with tab3:
-    st.header("🏛 Government Subsidy Info")
-    lang = st.radio("Select Language", ('English', 'தமிழ்'), key="subsidy_lang_radio")
-    scheme = st.selectbox("Select Scheme", list(subsidies.keys()), key="subsidy_scheme")
-    if st.button("Get Info", key="get_subsidy_btn"):
-        if lang == 'English':
-            st.info(f"**Description:** {subsidies[scheme]['description_en']}")
-        else:
-            st.info(f"**விளக்கம்:** {subsidies[scheme]['description_ta']}")
-        st.markdown(f"**Official Link:** [Learn more]({subsidies[scheme]['link']})")
-
-# --- Reminders ---
-with tab4:
-    st.header("⏰ Set Reminders")
-    task = st.text_input("Enter task (e.g., Fertilization, Spraying)", key="reminder_task")
-    days = st.slider("Remind me in (days)", 1, 30, 7, key="reminder_days")
-    if st.button("Set Reminder", key="set_reminder_btn"):
-        if task:
-            remind_date = datetime.now() + timedelta(days=days)
-            if "reminders" not in st.session_state:
-                st.session_state.reminders = []
-            st.session_state.reminders.append((task, remind_date))
-            st.success(f"✅ Reminder set for **{task}** on {remind_date.strftime('%d-%m-%Y')}")
-    
-    if "reminders" in st.session_state and st.session_state.reminders:
-        st.subheader("📌 Your Reminders")
-        for task, date in st.session_state.reminders:
-            st.write(f"- **{task}** on {date.strftime('%d-%m-%Y')}")
-
-# --- Farmer Forum ---
-with tab5:
-    st.header("💬 Farmer Forum")
-    new_msg = st.text_input("Ask a question or share tips", key="forum_input")
-    if st.button("Post", key="forum_post_btn"):
-        if new_msg:
-            if "forum_messages" not in st.session_state:
-                st.session_state.forum_messages = []
-            st.session_state.forum_messages.append(new_msg)
-            st.success("✅ Posted successfully!")
-    
-    if "forum_messages" in st.session_state and st.session_state.forum_messages:
-        st.subheader("Community Messages")
-        for i, msg in enumerate(reversed(st.session_state.forum_messages), 1):
-            st.write(f"{i}. {msg}")
-
-# --- Call an Expert ---
-with tab6:
-    st.header("📞 Call an Expert")
-    crop_expert = st.selectbox("Select Crop", list(helplines.keys()), key="expert_crop")
-    if st.button("Get Helpline", key="get_helpline_btn"):
-        st.success(f"📞 Official Helpline for {crop_expert}: {helplines[crop_expert]}")
-        st.markdown(f"[📲 Call Now](tel:{helplines[crop_expert]})")
-
-# --- Weather Info (Integrated Dashboard) ---
-with tab7:
-    st.header("🌦 Weather Information")
-    st.write("Get real-time weather data for your farming location.")
-    city = st.text_input("Enter your city / village", key="weather_city")
-    
-    # ⚠️ IMPORTANT: Replace 'YOUR_OPENWEATHER_API_KEY' with your actual key
-    # For security, do not commit your API key directly to Git.
-    OPENWEATHER_API_KEY = "YOUR_OPENWEATHER_API_KEY"
-    
-    def get_weather(city):
-        if not OPENWEATHER_API_KEY or OPENWEATHER_API_KEY == "YOUR_OPENWEATHER_API_KEY":
-            return {"error": "API key is missing or not configured."}
-        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid={OPENWEATHER_API_KEY}"
-        res = requests.get(url).json()
-        if res.get("cod") != 200:
-            return {"error": res.get("message", "Unable to fetch weather. Please check the city name.")}
-        return {
-            "city": res["name"],
-            "temp": res["main"]["temp"],
-            "humidity": res["main"]["humidity"],
-            "wind_speed": res["wind"]["speed"],
-            "desc": res["weather"][0]["description"].title(),
-            "icon": res["weather"][0]["icon"]
-        }
-
-    if st.button("Get Weather", key="get_weather_btn"):
-        if not city:
-            st.warning("Please enter a city name.")
-        else:
-            data = get_weather(city)
-            if "error" in data:
-                st.error(f"❌ {data['error']}")
-            else:
-                st.markdown(f"### Current weather in {data['city']}")
-                
-                col1, col2, col3, col4 = st.columns(4)
-                
-                with col1:
-                    st.metric(label="🌡️ Temperature", value=f"{data['temp']} °C")
-                with col2:
-                    st.metric(label="💧 Humidity", value=f"{data['humidity']}%")
-                with col3:
-                    st.metric(label="💨 Wind Speed", value=f"{data['wind_speed']} m/s")
-                with col4:
-                    st.metric(label="☁️ Condition", value=f"{data['desc']}")
-                
-                st.markdown(f"---")
-                st.success(f"**Actionable Advice:** The weather is currently {data['desc'].lower()}. Remember to check the `Water Advice` tab in the full app for personalized recommendations!")
-
-# --- Cost & Profit Calculator ---
-with tab8:
-    st.header("📈 Cost & Profit Calculator")
-    st.write("Estimate your potential profit based on costs and market prices.")
-    crop_select = st.selectbox("Select Crop", list(market_prices.keys()), key="calc_crop")
-    land_size = st.number_input("Land Size (in acres)", min_value=0.1, value=1.0, key="land_size")
-    cost_of_inputs = st.number_input("Total Cost of Inputs (e.g., seeds, fertilizer) per acre (₹)", min_value=0, value=2500, key="cost_inputs")
-    estimated_yield = st.number_input("Estimated Yield (in quintals per acre)", min_value=0.1, value=10.0, key="estimated_yield")
-    if st.button("Calculate Profit", key="calculate_btn"):
+def handle_predict_disease(uploaded_file):
+    if uploaded_file:
+        with st.spinner("Analyzing image..."):
+            encoded_image = base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
+            response = model_vision.generate_content([
+                "Analyze this crop image and provide a diagnosis and treatment plan. Respond in Tamil.",
+                {"mime_type": uploaded_file.type, "data": encoded_image}
+            ])
+            st.session_state.disease_prediction = response.text.strip()
+            
+def handle_get_market_price(crop_name, city_name):
+    with st.spinner("Searching..."):
         try:
-            price_str = market_prices[crop_select].replace('₹', '').replace('/quintal', '').replace('/kg', '')
-            current_price = float(price_str)
-            total_cost = land_size * cost_of_inputs
-            total_revenue = land_size * estimated_yield * current_price
-            net_profit = total_revenue - total_cost
-            st.success(f"**Calculations for {crop_select}**")
-            st.info(f"💰 **Total Revenue:** ₹{total_revenue:,.2f}")
-            st.warning(f"💸 **Total Cost:** ₹{total_cost:,.2f}")
-            st.metric(label="📈 **Net Profit**", value=f"₹{net_profit:,.2f}")
-        except (ValueError, KeyError) as e:
-            st.error("❌ An error occurred. Please check the market price data format.")
+            prompt = f"Find the latest market price of {crop_name} in {city_name} in Indian Rupees. Provide the source URL. Response in Tamil."
+            response = genai.GenerativeModel(
+                'gemini-1.5-flash-preview-05-20',
+                tools=[genai.Tool.from_google_search()]
+            ).generate_content(prompt)
+            st.session_state.market_price = response.text.strip()
+        except Exception as e:
+            st.session_state.market_price = f"Failed to fetch market data: {e}. No market data found."
 
-# --- Water Advice ---
-with tab9:
-    st.header("💧 Smart Water Management")
-    st.write("Get personalized watering advice based on real-time weather.")
+def handle_chatbot_message(prompt):
+    st.session_state.chat_messages.append({"sender": "user", "text": prompt})
+    with st.spinner("Thinking..."):
+        try:
+            response = st.session_state.chat_session.send_message(prompt, stream=True)
+            response_text = ""
+            for chunk in response:
+                response_text += chunk.text
+            st.session_state.chat_messages.append({"sender": "bot", "text": response_text})
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
+
+# --- UI Layout ---
+t = get_translation()
+st.set_page_config(layout="wide", page_title=t["title"])
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    html, body, [class*="st-"] { font-family: 'Inter', sans-serif; }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+""", unsafe_allow_html=True)
+
+# Sidebar
+with st.sidebar:
+    st.title(t["title"])
+    if st.button(t['language'] if st.session_state.language == 'en' else 'English'):
+        st.session_state.language = 'ta' if st.session_state.language == 'en' else 'en'
+        st.experimental_rerun()
+
+    if st.session_state.user:
+        st.write(f"Logged in as: {st.session_state.user['uid'][:8]}...")
+        if st.button(t['dashboard'], use_container_width=True):
+            set_page('dashboard')
+        if st.button(t['diseasePrediction'], use_container_width=True):
+            set_page('diseasePrediction')
+        if st.button(t['marketPrice'], use_container_width=True):
+            set_page('marketPrice')
+        if st.button(t['weather'], use_container_width=True):
+            set_page('weather')
+        if st.button(t['profitCalculator'], use_container_width=True):
+            set_page('profitCalculator')
+        if st.button(t['chatbot'], use_container_width=True):
+            set_page('chatbot')
+        if st.button(t['subsidies'], use_container_width=True):
+            set_page('subsidies')
+        if st.button(t['reminders'], use_container_width=True):
+            set_page('reminders')
+        if st.button(t['forum'], use_container_width=True):
+            set_page('forum')
+        st.markdown("---")
+        if st.button(t['logout'], use_container_width=True):
+            handle_logout()
+    else:
+        st.warning(t['loginDesc'])
+        if st.button(t['login'], use_container_width=True):
+            handle_login()
+
+# Main Content
+if st.session_state.page == 'login':
+    st.header(t['title'])
+    st.info(t['loginDesc'])
+elif st.session_state.page == 'dashboard':
+    st.header(t['dashboard'])
+    st.success(t['welcome'])
+    st.write("Dashboard content goes here.")
+
+elif st.session_state.page == 'diseasePrediction':
+    st.header(t['diseasePrediction'])
+    st.write(t['uploadImage'])
+    uploaded_file = st.file_uploader("", type=["png", "jpg", "jpeg"])
+    if uploaded_file:
+        st.image(uploaded_file, caption='Uploaded Image', use_column_width=True)
+        handle_predict_disease(uploaded_file)
+        if 'disease_prediction' in st.session_state:
+            st.subheader(t['predictionResult'])
+            st.write(st.session_state.disease_prediction)
+
+elif st.session_state.page == 'marketPrice':
+    st.header(t['marketPrice'])
+    crop_name = st.text_input(t['selectCrop'], key="crop_input")
+    city_name = st.text_input(t['selectCity'], key="city_input")
     
-    def get_weather(city):
-        if not OPENWEATHER_API_KEY or OPENWEATHER_API_KEY == "YOUR_OPENWEATHER_API_KEY":
-            return {"error": "API key is missing or not configured."}
-        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid={OPENWEATHER_API_KEY}"
-        res = requests.get(url).json()
-        if res.get("cod") != 200:
-            return {"error": res.get("message", "Unable to fetch weather. Please check the city name.")}
-        return {
-            "city": res["name"],
-            "temp": res["main"]["temp"],
-            "humidity": res["main"]["humidity"],
-            "desc": res["weather"][0]["description"].title(),
-            "icon": res["weather"][0]["icon"]
-        }
+    if st.button(t['searchPrice']):
+        handle_get_market_price(crop_name, city_name)
+    
+    if 'market_price' in st.session_state:
+        st.write(st.session_state.market_price)
 
-    def get_water_advice(weather_data):
-        if "error" in weather_data:
-            return f"Error: {weather_data['error']}"
-        description = weather_data['desc'].lower()
-        if 'rain' in description or 'shower' in description:
-            return "🌧️ **Rain expected:** No need to water your crops today. Delay irrigation."
-        elif 'thunderstorm' in description:
-            return "⛈️ **Storm alert:** Postpone all watering and field activities to prevent damage."
-        elif 'cloud' in description or 'overcast' in description:
-            return "☁️ **Cloudy day:** You can consider reducing water slightly, as evaporation will be lower."
-        elif 'sun' in description or 'clear' in description:
-            return "☀️ **Sunny & dry:** Water your crops as scheduled. It is a good day for field work."
+elif st.session_state.page == 'weather':
+    st.header(t['weather'])
+    location = st.text_input(t['weatherLocation'])
+    if st.button(t['getWeather']):
+        if location.lower() in mock_weather:
+            data = mock_weather[location.lower()]
+            st.write(f"**Temperature:** {data['temp']}")
+            st.write(f"**Condition:** {data['condition']}")
+            st.write(f"**Humidity:** {data['humidity']}")
         else:
-            return "💧 **Weather is stable:** Proceed with your usual watering schedule."
-    city_water_advice = st.text_input("Enter your city / village", key="water_city_input")
-    if st.button("Get Advice", key="get_water_advice_btn"):
-        if not city_water_advice:
-            st.warning("Please enter a city name.")
+            st.error("Weather data not available for this location.")
+
+elif st.session_state.page == 'profitCalculator':
+    st.header(t['profitCalculator'])
+    yield_val = st.number_input(t['yield'], min_value=0)
+    cost_val = st.number_input(t['cost'], min_value=0)
+    selling_price_val = st.number_input(t['sellingPrice'], min_value=0)
+    
+    if st.button(t['calculate']):
+        if yield_val > 0 and cost_val > 0 and selling_price_val > 0:
+            total_revenue = yield_val * selling_price_val
+            profit = total_revenue - cost_val
+            st.success(f"**{t['profit']}:** ₹{profit}")
         else:
-            data = get_weather(city_water_advice)
-            advice = get_water_advice(data)
-            st.info(advice)
+            st.error(t['noInput'])
 
-# --- Generative AI Assistant ---
-with tab_gen_ai:
-    st.header("🧠 AI Farmer Assistant")
-    st.write("I am a conversational AI. Ask me anything about farming!")
+elif st.session_state.page == 'chatbot':
+    st.header(t['chatbot'])
+    st.write(t['chatbotDesc'])
     
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+    chat_container = st.container()
     
-    # Initialize the chat session if it's not already
-    if "chat_session" not in st.session_state:
-        # Pass the knowledge base to the model once at the start
-        st.session_state.chat_session = genai.GenerativeModel('gemini-1.5-pro-latest',
-            system_instruction=create_knowledge_base()).start_chat(history=[])
+    for msg in st.session_state.chat_messages:
+        with chat_container:
+            with st.chat_message(msg["sender"]):
+                st.markdown(msg["text"])
     
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+    prompt = st.chat_input(t["chatPlaceholder"])
+    
+    if prompt:
+        handle_chatbot_message(prompt)
+        st.experimental_rerun()
 
-    if user_query := st.chat_input("How can I help you today?"):
-        st.session_state.messages.append({"role": "user", "content": user_query})
-        with st.chat_message("user"):
-            st.markdown(user_query)
+elif st.session_state.page == 'subsidies':
+    st.header(t['subsidies'])
+    for subsidy in subsidies_data:
+        st.markdown(f"**[{subsidy['name']}]({subsidy['url']})**")
+        st.write(subsidy['description'])
 
-        with st.spinner("Thinking..."):
-            try:
-                response = st.session_state.chat_session.send_message(user_query)
-                ai_response = response.text
-                st.session_state.messages.append({"role": "assistant", "content": ai_response})
-                st.chat_message("assistant").markdown(ai_response)
-            except Exception as e:
-                st.error(f"An error occurred: The Gemini API returned an error: {e}. This may be due to an incorrect model name, an invalid API key, or regional restrictions.")
+elif st.session_state.page == 'reminders':
+    st.header(t['reminders'])
+    new_reminder = st.text_input(t['reminderPlaceholder'])
+    if st.button(t['addReminder']):
+        add_reminder(new_reminder)
+            
+    reminders_ref = db.collection(f"users/{st.session_state.user['uid']}/reminders")
+    reminders = reminders_ref.order_by("timestamp").stream()
+    
+    st.subheader("Your Reminders")
+    reminders_found = False
+    for reminder in reminders:
+        reminders_found = True
+        doc_data = reminder.to_dict()
+        st.write(f"- {doc_data['text']}")
+    if not reminders_found:
+        st.info(t['noReminders'])
 
+elif st.session_state.page == 'forum':
+    st.header(t['forum'])
+    st.write(f"Your ID: `{st.session_state.user['uid'][:8]}...`")
+    
+    new_post = st.text_area(t['yourMessage'])
+    if st.button(t['post']):
+        post_to_forum(new_post)
 
+    st.subheader("Community Posts")
+    posts_ref = db.collection("forum_posts")
+    posts = posts_ref.order_by("timestamp", direction="DESCENDING").limit(20).stream()
+
+    posts_found = False
+    for post in posts:
+        posts_found = True
+        doc_data = post.to_dict()
+        st.markdown(f"**User:** `{doc_data['userId'][:8]}...`")
+        st.write(doc_data['text'])
+        st.write("---")
+    
+    if not posts_found:
+        st.info(t['noPosts'])
