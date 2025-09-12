@@ -35,7 +35,7 @@ subsidies = {
     "link": "https://soilhealth.dac.gov.in/"
   },
   "Krishi Sinchai Yojana": {
-    "description": "The Pradhan Mantri Krishi Sinchai Yojana (PMKSY) focuses on enhancing water use efficiency with the motto 'Per Drop More Crop'. The scheme provides a subsidy for installing micro-irrigation systems, such as drip and sprinkler irrigation.",
+    "description": "The Pradhan Mantri Krishi Sinchayee Yojana (PMKSY) focuses on enhancing water use efficiency with the motto 'Per Drop More Crop'. The scheme provides a subsidy for installing micro-irrigation systems, such as drip and sprinkler irrigation.",
     "link": "https://pmksy.gov.in/microirrigation/index.aspx"
   },
   "Interest Subvention Scheme": {
