@@ -302,7 +302,7 @@ with tab_voice_assistant:
     st.write("Click and speak a command. Responses are translated for a prototype demo.")
 
     lang_choice = st.selectbox("Select language for voice recognition", 
-                               ['English', 'தமிழ்'], key="voice_lang_select")
+                               ['English', 'தமிழ்'], index=0, key="voice_lang_select")
     
     language_codes = {'English': 'en-IN', 'தமிழ்': 'ta-IN'}
     
