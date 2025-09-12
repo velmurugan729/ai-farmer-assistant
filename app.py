@@ -108,7 +108,6 @@ def voice_to_text_component(language_code: str, key=None):
         </script>
         """,
         height=50,
-        # The `key` parameter is for the postMessage logic, not the `components.html` function itself.
     )
     return return_value
 
