@@ -27,8 +27,6 @@ def get_weather(city):
         "humidity": res["main"]["humidity"],
         "desc": res["weather"][0]["description"].title()
     }
-
-    }}"
     res = requests.get(url).json()
     if res.get("cod") != 200:
         return {"error": res.get("message", "Unable to fetch weather")}
@@ -152,6 +150,7 @@ with tab7:
             st.write(f"🌡 Temperature: {data['temp']} °C")
             st.write(f"💧 Humidity: {data['humidity']}%")
             st.write(f"☁ Condition: {data['desc']}")
+
 
 
 
