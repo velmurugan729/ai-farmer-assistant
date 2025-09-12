@@ -14,15 +14,20 @@ def get_weather(city):
     """Fetch weather info for a city using OpenWeatherMap API"""
     if not WEATHER_API_KEY:
         return {"error": "API key missing"}
-  url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid={WEATHER_API_KEY}"
+    
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid={WEATHER_API_KEY}"
     res = requests.get(url).json()
+    
     if res.get("cod") != 200:
         return {"error": res.get("message", "Unable to fetch weather")}
+    
     return {
         "city": res["name"],
         "temp": res["main"]["temp"],
         "humidity": res["main"]["humidity"],
         "desc": res["weather"][0]["description"].title()
+    }
+
     }}"
     res = requests.get(url).json()
     if res.get("cod") != 200:
@@ -147,6 +152,7 @@ with tab7:
             st.write(f"🌡 Temperature: {data['temp']} °C")
             st.write(f"💧 Humidity: {data['humidity']}%")
             st.write(f"☁ Condition: {data['desc']}")
+
 
 
 
