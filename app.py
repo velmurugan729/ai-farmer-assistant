@@ -54,7 +54,7 @@ st.title("🌱 AI Farmer Assistant")
 st.write("Expert Help for Farmers — Crop Health • Market Prices • Subsidy Info • Reminders • Forum • Experts 🌦 Weather Information")
 
 # Tabs
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "🧪 Diagnose Crop",
     "📊 Market Price",
     "🏛 Subsidy Info",
@@ -137,6 +137,7 @@ with tab7:
             st.write(f"🌡 Temperature: {data['temp']} °C")
             st.write(f"💧 Humidity: {data['humidity']}%")
             st.write(f"☁ Condition: {data['desc']}")
+
 
 
 
