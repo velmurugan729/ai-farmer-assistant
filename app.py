@@ -60,7 +60,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "🏛 Subsidy Info",
     "⏰ Reminders",
     "💬 Farmer Forum",
-    "📞 Call an Expert"
+    "📞 Call an Expert",
      "🌦 Weather Info"
 ])
 
@@ -137,6 +137,7 @@ with tab7:
             st.write(f"🌡 Temperature: {data['temp']} °C")
             st.write(f"💧 Humidity: {data['humidity']}%")
             st.write(f"☁ Condition: {data['desc']}")
+
 
 
 
