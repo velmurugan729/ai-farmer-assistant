@@ -311,7 +311,8 @@ with tab_voice_assistant:
         st.write(f"You said: **{voice_query}**")
         
         # Simple command parsing logic
-        query = voice_query.lower()
+        query = voice_query.lower() if voice_query else ""
+
         
         if lang_choice == 'English':
             if "price of" in query:
@@ -342,3 +343,4 @@ with tab_voice_assistant:
                  st.info(subsidies["PM-KISAN"]["description_ta"])
             else:
                 st.warning("மன்னிக்கவும், எனக்கு அந்த கட்டளை புரியவில்லை. பயிர் விலை அல்லது திட்டங்கள் பற்றி கேளுங்கள்.")
+
