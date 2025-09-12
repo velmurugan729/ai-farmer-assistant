@@ -1,5 +1,34 @@
 {
-  "PM-Kisan": "₹6,000 yearly income support to small farmers.",
-  "Fertilizer Subsidy": "Govt provides up to 50% subsidy on fertilizers.",
-  "Crop Insurance": "PM Fasal Bima Yojana covers crop loss."
+  "PM-KISAN": {
+    "description": "Pradhan Mantri Kisan Samman Nidhi provides an annual income support of ₹6,000 to eligible farmer families in three equal installments to meet farming expenses and domestic needs. The funds are transferred directly into the bank accounts of beneficiaries.",
+    "link": "https://pmkisan.gov.in/"
+  },
+  "Fasal Bima Yojana": {
+    "description": "This scheme provides comprehensive crop insurance against the loss of yield due to non-preventable natural risks like drought, floods, and pests. It offers financial support to farmers suffering crop loss.",
+    "link": "https://pmfby.gov.in/"
+  },
+  "Soil Health Card": {
+    "description": "A government-issued report that provides farmers with a detailed nutrient status of their soil, along with recommendations on the appropriate dosage of fertilizers and other soil amendments for their crops.",
+    "link": "https://soilhealth.dac.gov.in/"
+  },
+  "Krishi Sinchai Yojana": {
+    "description": "This mission focuses on enhancing water use efficiency in agriculture through the promotion of micro-irrigation systems, such as drip and sprinkler irrigation, to ensure 'Per Drop More Crop.' The scheme provides a subsidy for installing these systems.",
+    "link": "https://pmksy.gov.in/microirrigation/index.aspx"
+  },
+  "Interest Subvention Scheme": {
+    "description": "Provides concessional short-term crop loans to farmers at a low interest rate, with an additional subvention for prompt repayment. This aims to ensure easy and affordable credit availability.",
+    "link": "https://agriculture.vikaspedia.in/agriculture-credit/interest-subvention-scheme-for-farmers"
+  },
+  "Farm Mechanization Scheme": {
+    "description": "Under this scheme, farmers can avail financial assistance and subsidies to purchase farm machinery and equipment, making farming less labor-intensive and more efficient.",
+    "link": "https://www.india.gov.in/topics/agriculture/agricultural-machinery"
+  },
+  "Rashtriya Krishi Vikas Yojana": {
+    "description": "A government initiative aimed at achieving a 4% annual growth rate in the agriculture sector by providing grants to states for developing agriculture and allied sectors based on their local needs.",
+    "link": "https://rkvy.nic.in/"
+  },
+  "National Food Security Mission": {
+    "description": "A centrally sponsored scheme focused on increasing the production of food grains like rice, wheat, and pulses through the dissemination of improved technologies, farm practices, and resource conservation.",
+    "link": "https://www.nfsm.gov.in/"
+  }
 }
