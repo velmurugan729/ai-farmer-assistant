@@ -1,8 +1,39 @@
 import streamlit as st
 import random
+import requests
 import json
+import os
+from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
+# Load API keys
+load_dotenv()
+WEATHER_API_KEY = os.getenv(32aa226d1a5fce9a387269252ccc814a)
+
+def get_weather(city):
+    """Fetch weather info for a city using OpenWeatherMap API"""
+    if not WEATHER_API_KEY:
+        return {"error": "API key missing"}
+  url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid={32aa226d1a5fce9a387269252ccc814a}"
+    res = requests.get(url).json()
+    if res.get("cod") != 200:
+        return {"error": res.get("message", "Unable to fetch weather")}
+    return {
+        "city": res["name"],
+        "temp": res["main"]["temp"],
+        "humidity": res["main"]["humidity"],
+        "desc": res["weather"][0]["description"].title()
+    }}"
+    res = requests.get(url).json()
+    if res.get("cod") != 200:
+        return {"error": res.get("message", "Unable to fetch weather")}
+    return {
+        "city": res["name"],
+        "temp": res["main"]["temp"],
+        "humidity": res["main"]["humidity"],
+        "desc": res["weather"][0]["description"].title()
+    }
+    
 # Load data files
 with open("data/market.json") as f:
     market_prices = json.load(f)
@@ -30,7 +61,7 @@ if "forum" not in st.session_state:
 # Streamlit UI
 st.set_page_config(page_title="🌱 AI Farmer Assistant", layout="wide")
 st.title("🌱 AI Farmer Assistant")
-st.write("Expert Help for Farmers — Crop Health • Market Prices • Subsidy Info • Reminders • Forum • Experts")
+st.write("Expert Help for Farmers — Crop Health • Market Prices • Subsidy Info • Reminders • Forum • Experts 🌦 Weather Information")
 
 # Tabs
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -40,6 +71,7 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "⏰ Reminders",
     "💬 Farmer Forum",
     "📞 Call an Expert"
+     "🌦 Weather Info"
 ])
 
 # --- Crop Diagnosis ---
@@ -102,4 +134,17 @@ with tab6:
     if st.button("Get Helpline", key="get_helpline_btn"):
         st.success(f"📞 Official Helpline for {crop_expert}: {helplines[crop_expert]}")
         st.markdown(f"[📲 Call Now](tel:{helplines[crop_expert]})")
+        
+with tab7:
+    st.header("🌦 Weather Information")
+    city = st.text_input("Enter your city / village", key="weather_city")
+    if st.button("Get Weather", key="get_weather_btn"):
+        data = get_weather(city)
+        if "error" in data:
+            st.error(f"❌ {data['error']}")
+        else:
+            st.success(f"📍 Weather in {data['city']}")
+            st.write(f"🌡 Temperature: {data['temp']} °C")
+            st.write(f"💧 Humidity: {data['humidity']}%")
+            st.write(f"☁ Condition: {data['desc']}")
 
