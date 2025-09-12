@@ -3,7 +3,6 @@ import random
 import requests
 import json
 import os
-import streamlit.components.v1 as components
 from datetime import datetime, timedelta
 
 WEATHER_API_KEY = "17d7e2b75f830375584c3551f882a13f"  # replace with your real key
@@ -25,40 +24,6 @@ def get_weather(city):
         "humidity": res["main"]["humidity"],
         "desc": res["weather"][0]["description"].title()
     }    
-
-def voice_to_text_component(key=None):
-    """
-    A Streamlit component that uses browser's Web Speech API to get voice input.
-    Returns the recognized text.
-    """
-    return_value = components.html(
-        """
-        <script>
-            var recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.lang = 'en-IN'; // Set language to Indian English (or 'ta-IN' for Tamil)
-            recognition.continuous = false;
-            recognition.interimResults = false;
-
-            function startRecognition() {
-                recognition.start();
-            }
-
-            recognition.onresult = function(event) {
-                var recognizedText = event.results[0][0].transcript;
-                // Send the recognized text back to Streamlit
-                window.parent.postMessage({
-                    type: 'streamlit:setComponentValue',
-                    value: recognizedText,
-                    key: '""" + str(key) + """'
-                }, '*');
-            };
-        </script>
-        <button onclick="startRecognition()">🎙️ Start Listening</button>
-        """,
-        height=50,
-        key=key,
-    )
-    return return_value
 def get_water_advice(weather_data):
     """Provides watering advice based on weather conditions."""
     if "error" in weather_data:
@@ -101,37 +66,6 @@ if "reminders" not in st.session_state:
 if "forum" not in st.session_state:
     st.session_state.forum = []
 
-# ================== HANDS-FREE VOICE COMMANDS ==================
-st.sidebar.header("🎙️ Hands-Free Voice Commands")
-st.sidebar.markdown("Click the button and speak your query, e.g., 'What is the price of wheat?'")
-
-recognized_text = voice_to_text_component(key="voice_input")
-
-if recognized_text:
-    st.sidebar.write(f"You said: _{recognized_text}_")
-
-    # Simple command parsing
-    query = recognized_text.lower()
-
-    if "weather" in query or "climate" in query:
-        st.sidebar.info("Searching for weather...")
-        city_name = query.replace("weather in", "").strip()
-        if city_name:
-            # This would ideally call your get_weather function
-            st.sidebar.success(f"Simulating weather check for {city_name}.")
-        else:
-            st.sidebar.success("Simulating a general weather report.")
-
-    elif "price" in query and "of" in query:
-        st.sidebar.info("Searching for market price...")
-        crop_name = query.split("price of")[-1].strip()
-        if crop_name:
-            # This would ideally display the price from your existing dictionary
-            st.sidebar.success(f"Simulating market price for {crop_name}.")
-
-    elif "expert" in query or "helpline" in query:
-        st.sidebar.info("Looking up expert helpline...")
-        st.sidebar.success("Simulating helpline search.")
 # Streamlit UI
 st.set_page_config(page_title="🌱 AI Farmer Assistant", layout="wide")
 st.title("🌱 AI Farmer Assistant")
@@ -278,4 +212,3 @@ with tab9:
             else:
                 st.success(f"*Advice for {city_water_advice.title()}:*")
                 st.info(advice)
-
