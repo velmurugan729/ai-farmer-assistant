@@ -8,13 +8,13 @@ from datetime import datetime, timedelta
 
 # Load API keys
 load_dotenv()
-WEATHER_API_KEY = os.getenv(17d7e2b75f830375584c3551f882a13f)
+WEATHER_API_KEY = os.getenv("17d7e2b75f830375584c3551f882a13f")
 
 def get_weather(city):
     """Fetch weather info for a city using OpenWeatherMap API"""
     if not WEATHER_API_KEY:
         return {"error": "API key missing"}
-  url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid={17d7e2b75f830375584c3551f882a13f}"
+  url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid={"17d7e2b75f830375584c3551f882a13f"}"
     res = requests.get(url).json()
     if res.get("cod") != 200:
         return {"error": res.get("message", "Unable to fetch weather")}
@@ -147,5 +147,6 @@ with tab7:
             st.write(f"🌡 Temperature: {data['temp']} °C")
             st.write(f"💧 Humidity: {data['humidity']}%")
             st.write(f"☁ Condition: {data['desc']}")
+
 
 
