@@ -1,17 +1,17 @@
 import streamlit as st
-import openai
+import google.generativeai as genai
 import json
 import os
 import random
 import requests
 from datetime import datetime, timedelta
 
-# ================== OPENAI API CONFIG ==================
-# ⚠️ Replace 'YOUR_OPENAI_API_KEY' with your actual key.
+# ================== GEMINI API CONFIG ==================
+# ⚠️ Replace 'YOUR_GEMINI_API_KEY' with your actual key.
 # For security, do not commit your key to a public repository.
-# You can get your key at https://platform.openai.com/account/api-keys
-openai.api_key = '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'
-openai_model = "gpt-3.5-turbo"
+# You can get your key at https://aistudio.google.com/app/apikey
+genai.configure(api_key='')
+gemini_model = "gemini-1.5-flash-preview-05-20"
 
 # ================== AI ASSISTANT KNOWLEDGE BASE ==================
 
@@ -309,7 +309,9 @@ with tab_gen_ai:
     if "messages" not in st.session_state:
         st.session_state.messages = []
     
+    # Initialize the chat session if it's not already
     if "chat_session" not in st.session_state:
+        # Pass the knowledge base to the model once at the start
         st.session_state.chat_session = genai.GenerativeModel('gemini-1.5-pro-latest',
             system_instruction=create_knowledge_base()).start_chat(history=[])
     
