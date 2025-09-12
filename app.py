@@ -55,15 +55,15 @@ with tab1:
 # --- Market Prices ---
 with tab2:
     st.header("📊 Check Market Prices")
-    crop = st.selectbox("Select Crop", list(market_prices.keys()))
-    if st.button("Get Price"):
+    crop = st.selectbox("Select Crop", list(market_prices.keys()), key="market_crop")
+    if st.button("Get Price", key="get_price_btn"):
         st.success(f"💰 Current Market Price of {crop}: {market_prices[crop]}")
 
 # --- Subsidy Info ---
 with tab3:
     st.header("🏛 Government Subsidy Info")
-    choice = st.selectbox("Select Scheme", list(subsidies.keys()))
-    if st.button("Get Info"):
+    choice = st.selectbox("Select Scheme", list(subsidies.keys()), key="subsidy_scheme")
+    if st.button("Get Info", key="get_subsidy_btn"):
         st.info(f"**{choice}:** {subsidies[choice]}")
 
 # --- Reminders ---
@@ -98,7 +98,8 @@ with tab5:
 # --- Call an Expert ---
 with tab6:
     st.header("📞 Call an Expert")
-    crop_expert = st.selectbox("Select Crop", list(helplines.keys()))
-    if st.button("Get Helpline"):
+    crop_expert = st.selectbox("Select Crop", list(helplines.keys()), key="expert_crop")
+    if st.button("Get Helpline", key="get_helpline_btn"):
         st.success(f"📞 Official Helpline for {crop_expert}: {helplines[crop_expert]}")
         st.markdown(f"[📲 Call Now](tel:{helplines[crop_expert]})")
+
