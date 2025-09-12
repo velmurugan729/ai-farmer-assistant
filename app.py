@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 # ================== GEMINI API CONFIG ==================
 # ⚠️ Replace 'YOUR_GEMINI_API_KEY' with your actual key.
 # For security, do not commit your key to a public repository.
-genai.configure(api_key='YOUR_GEMINI_API_KEY')
+genai.configure(api_key='AIzaSyBnRvhlrHsYbvOCp2dCdRnz3nHmUc4HKgM')
 model = genai.GenerativeModel('gemini-1.5-pro-latest')
 
 # ================== AI ASSISTANT KNOWLEDGE BASE ==================
