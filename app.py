@@ -15,7 +15,6 @@ from datetime import datetime, timedelta
 
 # ================== AI ASSISTANT KNOWLEDGE BASE ==================
 
-# Define all data here to be used by the app
 market_prices = {
     "Rice": "₹40/kg",
     "Wheat": "₹28/kg",
@@ -64,8 +63,9 @@ diseases = [
 def voice_to_text_component(language_code: str, key=None):
     """
     A Streamlit component that uses the browser's Web Speech API to get voice input.
+    Stores recognized text into st.session_state[key].
     """
-    return_value = components.html(
+    components.html(
         f"""
         <style>
             .listening {{
@@ -77,7 +77,10 @@ def voice_to_text_component(language_code: str, key=None):
                 100% {{ box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }}
             }}
         </style>
-        <button id="listenBtn" onclick="startRecognition()" style="background-color: #4CAF50; color: white; padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 16px;">🎙️ Start Listening</button>
+        <button id="listenBtn" onclick="startRecognition()" 
+            style="background-color: #4CAF50; color: white; padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 16px;">
+            🎙️ Start Listening
+        </button>
         <script>
             var recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
             recognition.lang = '{language_code}';
@@ -96,8 +99,8 @@ def voice_to_text_component(language_code: str, key=None):
                 var recognizedText = event.results[0][0].transcript;
                 window.parent.postMessage({{
                     type: 'streamlit:setComponentValue',
-                    value: recognizedText,
-                    key: '{key}'
+                    key: '{key}',
+                    value: recognizedText
                 }}, '*');
             }};
 
@@ -108,8 +111,10 @@ def voice_to_text_component(language_code: str, key=None):
         </script>
         """,
         height=50,
+        key=key
     )
-    return return_value
+    # Return value safely from session state
+    return st.session_state.get(key, "")
 
 # ================== STREAMLIT APP LAYOUT ==================
 st.set_page_config(page_title="AI Farmer Assistant", page_icon="🌱", layout="wide")
@@ -146,7 +151,6 @@ with tab1:
             st.success(f"**கண்டறிதல்:** {prediction['name_ta']}")
             st.info(f"**பரிந்துரை:** {prediction['advice_ta']}")
 
-
 # --- Market Prices ---
 with tab2:
     st.header("📊 Check Market Prices")
@@ -157,7 +161,6 @@ with tab2:
              st.success(f"💰 Current Market Price of {crop}: {market_prices[crop]}")
         else:
              st.success(f"💰 {crop}-இன் தற்போதைய சந்தை விலை: {market_prices[crop]}")
-
 
 # --- Subsidy Info ---
 with tab3:
@@ -310,10 +313,8 @@ with tab_voice_assistant:
     if voice_query:
         st.write(f"You said: **{voice_query}**")
         
-        # Simple command parsing logic
-        query = voice_query.lower() if voice_query else ""
+        query = voice_query.lower()
 
-        
         if lang_choice == 'English':
             if "price of" in query:
                 crop = query.split("price of")[-1].strip().title()
@@ -327,7 +328,6 @@ with tab_voice_assistant:
                 st.warning("I'm sorry, I couldn't understand that command. Try asking for a crop price or a subsidy description.")
         else: # Tamil
             if "விலை" in query or "rate" in query:
-                # This is a very simple example. A real model would be needed for complex parsing.
                 if "அரிசி" in query:
                     crop = "Rice"
                 elif "தக்காளி" in query:
@@ -338,9 +338,4 @@ with tab_voice_assistant:
                 if crop in market_prices:
                     st.success(f"{crop}-இன் தற்போதைய சந்தை விலை: {market_prices[crop]}")
                 else:
-                    st.warning("மன்னிக்கவும், அந்த பயிருக்கான விலை கிடைக்கவில்லை.")
-            elif "pm-kisan" in query or "கிசான்" in query:
-                 st.info(subsidies["PM-KISAN"]["description_ta"])
-            else:
-                st.warning("மன்னிக்கவும், எனக்கு அந்த கட்டளை புரியவில்லை. பயிர் விலை அல்லது திட்டங்கள் பற்றி கேளுங்கள்.")
-
+                    st.warning("மன்னிக்கவும்
