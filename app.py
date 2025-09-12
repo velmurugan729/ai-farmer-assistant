@@ -1,6 +1,5 @@
 import streamlit as st
 import google.generativeai as genai
-import streamlit.components.v1 as components
 import json
 import os
 import random
@@ -8,9 +7,10 @@ import requests
 from datetime import datetime, timedelta
 
 # ================== GEMINI API CONFIG ==================
-# ⚠️ Replace 'YOUR_GEMINI_API_KEY' with your actual key
-genai.configure(api_key='AIzaSyBnRvhlrHsYbvOCp2dCdRnz3nHmUc4HKgM')
-model = genai.GenerativeModel('gemini-1.0-pro')
+# ⚠️ Replace 'YOUR_GEMINI_API_KEY' with your actual key.
+# For security, do not commit your key to a public repository.
+genai.configure(api_key='YOUR_GEMINI_API_KEY')
+model = genai.GenerativeModel('gemini-1.5-flash-preview-05-20')
 
 # ================== AI ASSISTANT KNOWLEDGE BASE ==================
 
@@ -93,7 +93,7 @@ def get_ai_response_gemini(user_query):
         response = st.session_state.chat_session.send_message(user_query)
         return response.text
     except Exception as e:
-        return f"An error occurred: {e}"
+        return f"An error occurred: The Gemini API returned an error: {e}. This may be due to an incorrect model name, an invalid API key, or regional restrictions."
 
 # ================== STREAMLIT APP LAYOUT ==================
 st.set_page_config(page_title="AI Farmer Assistant", page_icon="🌱", layout="wide")
@@ -274,8 +274,8 @@ with tab9:
     st.header("💧 Smart Water Management")
     st.write("Get personalized watering advice based on real-time weather.")
     
+    # This is a dummy function to avoid errors, as the real one is in the Weather Info tab
     def get_weather(city):
-        # A simple placeholder function for the Water Advice tab
         return {"error": "API not configured for this tab."}
 
     def get_water_advice(weather_data):
