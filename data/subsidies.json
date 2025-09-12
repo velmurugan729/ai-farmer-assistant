@@ -1,39 +1,42 @@
 {
   "PM-KISAN": {
-    "description": "Pradhan Mantri Kisan Samman Nidhi provides an annual income support of ₹6,000 to eligible farmer families in three equal installments to meet farming expenses and domestic needs. The funds are transferred directly into the bank accounts of beneficiaries.",
-    "link": "https://pmkisan.gov.in/"
+    "description": "The **Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)** scheme provides financial support to all landholding farmer families in India. Under this scheme, an income support of ₹6,000 per year is disbursed in three equal installments of ₹2,000 every four months. The funds are transferred directly into the bank accounts of eligible farmers through Direct Benefit Transfer (DBT) to help them meet farming expenses.",
+    "link": "https://pmkisan.gov.in/",
+    "image": "image of the PM-KISAN logo"
   },
   "Fasal Bima Yojana": {
-    "description": "This scheme provides comprehensive crop insurance against the loss of yield due to non-preventable natural risks like drought, floods, and pests. It offers financial support to farmers suffering crop loss.",
-    "link": "https://pmfby.gov.in/"
+    "description": "The **Pradhan Mantri Fasal Bima Yojana (PMFBY)** is a crop insurance scheme designed to provide financial protection to farmers against crop loss due to non-preventable natural disasters, pests, and diseases. It aims to stabilize farmers' incomes and encourage them to adopt innovative agricultural practices. The scheme provides timely compensation to prevent farmers from falling into debt traps.",
+    "link": "https://pmfby.gov.in/",
+    "image": "image of crop insurance India"
   },
   "Soil Health Card": {
-    "description": "A government-issued report that provides farmers with a detailed nutrient status of their soil, along with recommendations on the appropriate dosage of fertilizers and other soil amendments for their crops.",
-    "link": "https://soilhealth.dac.gov.in/"
+    "description": "This initiative provides every farmer with a **Soil Health Card**, a detailed report that contains the nutrient status of their soil. Based on this analysis, the card offers recommendations on the appropriate fertilizer dosage and other soil amendments. This helps farmers make informed decisions to improve soil fertility and ultimately increase crop yield.",
+    "link": "https://soilhealth.dac.gov.in/",
+    "image": "image of a farmer holding a soil health card"
   },
   "Krishi Sinchai Yojana": {
-    "description": "This mission focuses on enhancing water use efficiency in agriculture through the promotion of micro-irrigation systems, such as drip and sprinkler irrigation, to ensure 'Per Drop More Crop.' The scheme provides a subsidy for installing these systems.",
-    "link": "https://pmksy.gov.in/microirrigation/index.aspx"
+    "description": "The **Pradhan Mantri Krishi Sinchai Yojana (PMKSY)** focuses on increasing water use efficiency at the farm level with the motto 'Per Drop More Crop'. The scheme provides a substantial subsidy for installing micro-irrigation systems, such as drip and sprinkler irrigation, to expand the cultivated area under assured irrigation and reduce water wastage.",
+    "link": "https://pmksy.gov.in/microirrigation/index.aspx",
+    "image": "image of a farmer using drip irrigation"
   },
   "Interest Subvention Scheme": {
-    "description": "Provides concessional short-term crop loans to farmers at a low interest rate, with an additional subvention for prompt repayment. This aims to ensure easy and affordable credit availability.",
-    "link": "https://agriculture.vikaspedia.in/agriculture-credit/interest-subvention-scheme-for-farmers"
+    "description": "This scheme provides concessional short-term agricultural loans to farmers at a subsidized interest rate. Farmers can avail loans up to ₹3 lakh at a 7% interest rate, with an additional 3% subvention for prompt repayment. This makes the effective interest rate just 4%, ensuring easy and affordable credit availability.",
+    "link": "https://agriculture.vikaspedia.in/agriculture-credit/interest-subvention-scheme-for-farmers",
+    "image": "image of agricultural credit India"
   },
   "Farm Mechanization Scheme": {
-    "description": "Under this scheme, farmers can avail financial assistance and subsidies to purchase farm machinery and equipment, making farming less labor-intensive and more efficient.",
-    "link": "https://www.india.gov.in/topics/agriculture/agricultural-machinery"
+    "description": "This scheme provides financial assistance and subsidies to farmers for purchasing modern farm machinery and equipment. The goal is to make farming less labor-intensive, more efficient, and more productive. The subsidy can cover a significant portion of the cost of equipment like tractors, tillers, and power sprayers.",
+    "link": "https://www.india.gov.in/topics/agriculture/agricultural-machinery",
+    "image": "image of farm machinery subsidy India"
   },
   "Rashtriya Krishi Vikas Yojana": {
-    "description": "A government initiative aimed at achieving a 4% annual growth rate in the agriculture sector by providing grants to states for developing agriculture and allied sectors based on their local needs.",
-    "link": "https://rkvy.nic.in/"
+    "description": "The **Rashtriya Krishi Vikas Yojana (RKVY)** is an umbrella scheme aimed at the holistic development of the agriculture and allied sectors. It grants flexibility and autonomy to states to plan and implement agricultural schemes according to their specific needs and priorities, ensuring a more targeted and effective approach to development.",
+    "link": "https://rkvy.nic.in/",
+    "image": "image of the Rashtriya Krishi Vikas Yojana emblem"
   },
   "National Food Security Mission": {
-    "description": "A centrally sponsored scheme focused on increasing the production of food grains like rice, wheat, and pulses through the dissemination of improved technologies, farm practices, and resource conservation.",
-    "link": "https://www.nfsm.gov.in/"
+    "description": "Launched to increase the production of food grains, the **National Food Security Mission (NFSM)** focuses on enhancing the productivity of crops like rice, wheat, and pulses. It promotes improved technologies, sustainable farm practices, and resource conservation to ensure food and nutritional security for the people of India.",
+    "link": "https://www.nfsm.gov.in/",
+    "image": "image of National Food Security Mission India"
   }
 }
-
-
-
-
-
