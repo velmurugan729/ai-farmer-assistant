@@ -108,7 +108,7 @@ def voice_to_text_component(language_code: str, key=None):
         </script>
         """,
         height=50,
-        key=key,
+        # The `key` parameter is for the postMessage logic, not the `components.html` function itself.
     )
     return return_value
 
@@ -336,7 +336,7 @@ with tab_voice_assistant:
                     crop = "Not found"
                 
                 if crop in market_prices:
-                    st.success(f"{crop}-இன் சந்தை விலை: {market_prices[crop]}")
+                    st.success(f"{crop}-இன் தற்போதைய சந்தை விலை: {market_prices[crop]}")
                 else:
                     st.warning("மன்னிக்கவும், அந்த பயிருக்கான விலை கிடைக்கவில்லை.")
             elif "pm-kisan" in query or "கிசான்" in query:
