@@ -3,12 +3,9 @@ import random
 import requests
 import json
 import os
-from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
-# Load API keys
-load_dotenv()
-WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
+WEATHER_API_KEY = "17d7e2b75f830375584c3551f882a13f"  # replace with your real key
 
 def get_weather(city):
     """Fetch weather info for a city using OpenWeatherMap API"""
@@ -26,17 +23,7 @@ def get_weather(city):
         "temp": res["main"]["temp"],
         "humidity": res["main"]["humidity"],
         "desc": res["weather"][0]["description"].title()
-    }
-    res = requests.get(url).json()
-    if res.get("cod") != 200:
-        return {"error": res.get("message", "Unable to fetch weather")}
-    return {
-        "city": res["name"],
-        "temp": res["main"]["temp"],
-        "humidity": res["main"]["humidity"],
-        "desc": res["weather"][0]["description"].title()
-    }
-    
+    }    
 # Load data files
 with open("data/market.json") as f:
     market_prices = json.load(f)
@@ -150,6 +137,7 @@ with tab7:
             st.write(f"🌡 Temperature: {data['temp']} °C")
             st.write(f"💧 Humidity: {data['humidity']}%")
             st.write(f"☁ Condition: {data['desc']}")
+
 
 
 
