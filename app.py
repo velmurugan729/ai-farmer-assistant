@@ -7,11 +7,10 @@ import random
 import requests
 from datetime import datetime, timedelta
 
-# ================== GEMINI API CONFIG (DISABLED) ==================
-# The Gemini API is not used in this version.
-# You can re-enable it for the AI Assistant tab later.
-# genai.configure(api_key='YOUR_GEMINI_API_KEY')
-# model = genai.GenerativeModel('gemini-1.0-pro')
+# ================== GEMINI API CONFIG ==================
+# ⚠️ Replace 'YOUR_GEMINI_API_KEY' with your actual key
+genai.configure(api_key='AIzaSyBnRvhlrHsYbvOCp2dCdRnz3nHmUc4HKgM')
+model = genai.GenerativeModel('gemini-1.0-pro')
 
 # ================== AI ASSISTANT KNOWLEDGE BASE ==================
 
@@ -59,13 +58,50 @@ diseases = [
      "name_ta": "ஆரோக்கியமான பயிர்", "advice_ta": "எந்த பிரச்சனைகளும் கண்டறியப்படவில்லை. தொடர்ந்து கண்காணிக்கவும்."}
 ]
 
+def create_knowledge_base():
+    """Generates a text-based knowledge base for the AI from your app's data."""
+    persona = "You are a helpful AI assistant for farmers, named the 'AI Farmer Assistant'. Your primary goal is to provide expert, on-demand help to farmers. You are a source of truth for all things farming, including crop prices, government schemes, and weather. Be concise and friendly."
+
+    current_date = datetime.now().strftime("%B %d, %Y")
+    current_location = "Chennai, Tamil Nadu"
+    
+    knowledge_base = f"""
+    {persona}
+
+    Today's date is {current_date} and the current location is {current_location}.
+
+    Here is the data you must use. Do not use any other external knowledge or information.
+    - **Market Prices:** {json.dumps(market_prices)}
+    - **Government Subsidies:** {json.dumps(subsidies)}
+    - **Helpline Numbers:** {json.dumps(helplines)}
+    
+    **Instructions:**
+    - Use the provided data to answer questions directly.
+    - If a farmer asks for information not in the data, state that you do not have that specific information.
+    - Be conversational and encouraging.
+    - Keep your responses under 3 sentences unless more detail is requested.
+    """
+    return knowledge_base
+
+def get_ai_response_gemini(user_query):
+    """Handles conversational turns with the Gemini API."""
+    try:
+        if "chat_session" not in st.session_state:
+            st.session_state.chat_session = model.start_chat(history=[])
+            st.session_state.chat_session.send_message(create_knowledge_base())
+            
+        response = st.session_state.chat_session.send_message(user_query)
+        return response.text
+    except Exception as e:
+        return f"An error occurred: {e}"
+
 # ================== STREAMLIT APP LAYOUT ==================
 st.set_page_config(page_title="AI Farmer Assistant", page_icon="🌱", layout="wide")
 st.title("🌱 AI Farmer Assistant")
 st.markdown("Expert Help on Demand for Farmers")
 
 # Tabs
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab_gen_ai = st.tabs([
     "🧪 Diagnose Crop",
     "📊 Market Price",
     "🏛 Subsidy Info",
@@ -74,7 +110,8 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
     "📞 Call an Expert",
     "🌦 Weather Info",
     "📈 Profit Calc",
-    "💧 Water Advice"
+    "💧 Water Advice",
+    "🧠 AI Assistant"
 ])
 
 # --- Diagnose Crop ---
@@ -263,3 +300,31 @@ with tab9:
             data = get_weather(city_water_advice)
             advice = get_water_advice(data)
             st.info(advice)
+
+# --- Generative AI Assistant ---
+with tab_gen_ai:
+    st.header("🧠 AI Farmer Assistant")
+    st.write("I am a conversational AI. Ask me anything about farming!")
+    
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    
+    if "chat_session" not in st.session_state:
+        st.session_state.chat_session = model.start_chat(history=[])
+        st.session_state.chat_session.send_message(create_knowledge_base())
+    
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    if user_query := st.chat_input("How can I help you today?"):
+        st.session_state.messages.append({"role": "user", "content": user_query})
+        with st.chat_message("user"):
+            st.markdown(user_query)
+
+        with st.spinner("Thinking..."):
+            ai_response = get_ai_response_gemini(user_query)
+        
+        st.session_state.messages.append({"role": "assistant", "content": ai_response})
+        with st.chat_message("assistant"):
+            st.markdown(ai_response)
