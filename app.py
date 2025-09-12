@@ -338,4 +338,5 @@ with tab_voice_assistant:
                 if crop in market_prices:
                     st.success(f"{crop}-இன் தற்போதைய சந்தை விலை: {market_prices[crop]}")
                 else:
-                    st.warning("மன்னிக்கவும்
+                    st.warning("மன்னிக்கவும்")
+
