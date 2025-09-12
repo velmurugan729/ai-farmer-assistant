@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 # ⚠️ Replace 'YOUR_GEMINI_API_KEY' with your actual key.
 # For security, do not commit your key to a public repository.
 genai.configure(api_key='YOUR_GEMINI_API_KEY')
-model = genai.GenerativeModel('gemini-1.5-flash-preview-05-20')
+model = genai.GenerativeModel('gemini-1.5-pro-latest')
 
 # ================== AI ASSISTANT KNOWLEDGE BASE ==================
 
@@ -93,7 +93,7 @@ def get_ai_response_gemini(user_query):
         response = st.session_state.chat_session.send_message(user_query)
         return response.text
     except Exception as e:
-        return f"An error occurred: The Gemini API returned an error: {e}. This may be due to an incorrect model name, an invalid API key, or regional restrictions."
+        return f"An error occurred: The Gemini API returned an error: {e}. This may be due to an incorrect model name, an invalid API key, or regional restrictions. Please check the `genai.configure` and `genai.GenerativeModel` lines in your app.py."
 
 # ================== STREAMLIT APP LAYOUT ==================
 st.set_page_config(page_title="AI Farmer Assistant", page_icon="🌱", layout="wide")
