@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 # ================== GEMINI API CONFIG ==================
 # ⚠️ Replace 'YOUR_GEMINI_API_KEY' with your actual key.
 # For security, do not commit your key to a public repository.
-genai.configure(api_key='YOUR_GEMINI_API_KEY')
+genai.configure(api_key='AIzaSyC2icCDRD50HB_eHyT1o6aK43WQ_tJnox4')
 model = genai.GenerativeModel('gemini-1.5-pro-latest')
 
 # ================== AI ASSISTANT KNOWLEDGE BASE ==================
@@ -332,3 +332,4 @@ with tab_gen_ai:
                 st.chat_message("assistant").markdown(ai_response)
             except Exception as e:
                 st.error(f"An error occurred: The Gemini API returned an error: {e}. This may be due to an incorrect model name, an invalid API key, or regional restrictions.")
+
