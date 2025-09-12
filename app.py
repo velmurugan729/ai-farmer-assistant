@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 # ⚠️ Replace 'YOUR_GEMINI_API_KEY' with your actual key.
 # For security, do not commit your key to a public repository.
 # You can get your key at https://aistudio.google.com/app/apikey
-genai.configure(api_key='AIzaSyAzNxlPxp-uAxwUU9uaW7h2NSPxH1TCVlU')
+genai.configure(api_key='AIzaSyD52TlctJeEleP4YXdbLwAZCt4YSqrBkh4')
 gemini_model = "gemini-1.5-flash-preview-05-20"
 
 # ================== AI ASSISTANT KNOWLEDGE BASE ==================
@@ -332,4 +332,5 @@ with tab_gen_ai:
                 st.chat_message("assistant").markdown(ai_response)
             except Exception as e:
                 st.error(f"An error occurred: The Gemini API returned an error: {e}. This may be due to an incorrect model name, an invalid API key, or regional restrictions.")
+
 
