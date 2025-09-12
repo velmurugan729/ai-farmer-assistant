@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 # ================== GEMINI API CONFIG ==================
 # ⚠️ Replace 'YOUR_GEMINI_API_KEY' with your actual key
-genai.configure(api_key=AIzaSyBnRvhlrHsYbvOCp2dCdRnz3nHmUc4HKgM)
+genai.configure(api_key='AIzaSyBnRvhlrHsYbvOCp2dCdRnz3nHmUc4HKgM')
 model = genai.GenerativeModel('gemini-pro')
 
 # ================== AI ASSISTANT KNOWLEDGE BASE ==================
@@ -306,3 +306,4 @@ with tab_gen_ai:
         st.session_state.messages.append({"role": "assistant", "content": ai_response})
         with st.chat_message("assistant"):
             st.markdown(ai_response)
+
