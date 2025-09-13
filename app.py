@@ -86,13 +86,19 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
 
 # --- Crop Diagnosis ---
 with tab1:
-    st.header("🧪 Diagnose Crop Disease")
-    uploaded = st.file_uploader("Upload a crop image", type=["jpg", "png", "jpeg"])
-    if uploaded:
-        st.image(uploaded, caption="Uploaded Crop Image", use_column_width=True)
-        prediction = random.choice(diseases)  # Dummy prediction
-        st.success(f"Prediction: {prediction['name']}")
-        st.info(f"Advice: {prediction['advice']}")
+elif st.session_state.page == 'diseasePrediction':
+    st.header(t['diseasePrediction'])
+    st.write(t['uploadImage'])
+    
+    st.markdown(f"**Or visit an external diagnosis tool:** [Crop Diagnosis AI](https://crop-diagnosis-ai-2025.web.app/)")
+    
+    uploaded_file = st.file_uploader("", type=["png", "jpg", "jpeg"])
+    if uploaded_file:
+        st.image(uploaded_file, caption='Uploaded Image', use_column_width=True)
+        handle_predict_disease(uploaded_file)
+        if 'disease_prediction' in st.session_state:
+            st.subheader(t['predictionResult'])
+            st.write(st.session_state.disease_prediction)
 
 # --- Market Prices ---
 with tab2:
@@ -212,3 +218,4 @@ with tab9:
             else:
                 st.success(f"*Advice for {city_water_advice.title()}:*")
                 st.info(advice)
+
